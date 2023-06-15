@@ -1,33 +1,16 @@
 package main
 
 import (
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"log"
 	"os"
 	"perun.network/go-perun/wire"
-	"perun.network/perun-ckb-backend/backend"
 	"perun.network/perun-ckb-backend/wallet"
 	"perun.network/perun-ckb-demo/client"
+	"perun.network/perun-ckb-demo/deployment"
 	vc "perun.network/perun-demo-tui/client"
 	"perun.network/perun-demo-tui/view"
 )
-
-var Deployment = backend.Deployment{
-	Network:              types.NetworkTest,
-	PCTSDep:              types.CellDep{},
-	PCLSDep:              types.CellDep{},
-	PFLSDep:              types.CellDep{},
-	PCTSCodeHash:         types.Hash{},
-	PCTSHashType:         "",
-	PCLSCodeHash:         types.Hash{},
-	PCLSHashType:         "",
-	PFLSCodeHash:         types.Hash{},
-	PFLSHashType:         "",
-	PFLSMinCapacity:      0,
-	DefaultLockScript:    types.Script{},
-	DefaultLockScriptDep: types.CellDep{},
-}
 
 const (
 	rpcNodeURL = "http://localhost:8114"
@@ -43,16 +26,25 @@ func SetLogFile(path string) {
 }
 
 func main() {
+	deployment.GetKey("./devnet/accounts/alice.pk")
 	SetLogFile("demo.log")
+
+	d, err := deployment.GetDeployment("./devnet/contracts/migrations/dev/")
 
 	w := wallet.NewEphemeralWallet()
 
-	keyAlice := secp256k1.PrivKeyFromBytes([]byte("alice")) // TODO: Add Alice's private key for demo!
-	keyBob := secp256k1.PrivKeyFromBytes([]byte("bob"))     // TODO: Add Bob's private key for demo!
+	keyAlice, err := deployment.GetKey("./devnet/accounts/alice.pk")
+	if err != nil {
+		log.Fatalf("error getting alice's private key: %v", err)
+	}
+	keyBob, err := deployment.GetKey("./devnet/accounts/bob.pk")
+	if err != nil {
+		log.Fatalf("error getting bob's private key: %v", err)
+	}
 	aliceAccount := wallet.NewAccountFromPrivateKey(keyAlice)
 	bobAccount := wallet.NewAccountFromPrivateKey(keyBob)
 
-	err := w.AddAccount(aliceAccount)
+	err = w.AddAccount(aliceAccount)
 	if err != nil {
 		log.Fatalf("error adding alice's account: %v", err)
 	}
@@ -67,7 +59,7 @@ func main() {
 	alice, err := client.NewPaymentClient(
 		"Alice",
 		Network,
-		Deployment,
+		d,
 		bus,
 		rpcNodeURL,
 		aliceAccount,
@@ -79,7 +71,7 @@ func main() {
 	bob, err := client.NewPaymentClient(
 		"Bob",
 		Network,
-		Deployment,
+		d,
 		bus,
 		rpcNodeURL,
 		bobAccount,

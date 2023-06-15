@@ -97,7 +97,6 @@ func (p *PaymentClient) WalletAddress() gpwallet.Address {
 }
 
 func (p *PaymentClient) Register(observer vc.Observer) {
-	log.Printf("Registering observer %s on client %s", observer.GetID().String(), p.Name)
 	p.observerMutex.Lock()
 	defer p.observerMutex.Unlock()
 	p.observers = append(p.observers, observer)
@@ -147,7 +146,6 @@ func (p *PaymentClient) DisplayName() string {
 
 func (p *PaymentClient) DisplayAddress() string {
 	addr, _ := address.AsParticipant(p.Account.Address()).ToCKBAddress(p.Network).Encode()
-	log.Printf("DisplayAddress for %s: %s\n", p.Name, addr)
 	return addr
 }
 

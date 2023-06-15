@@ -13,7 +13,8 @@ import (
 )
 
 func (p *PaymentClient) PollBalances() {
-	pollingInterval := 2 * time.Second
+	defer log.Println("PollBalances: stopped")
+	pollingInterval := time.Second
 	searchKey := &indexer.SearchKey{
 		Script:           address.AsParticipant(p.Account.Address()).PaymentScript,
 		ScriptType:       types.ScriptTypeLock,
@@ -21,13 +22,16 @@ func (p *PaymentClient) PollBalances() {
 		Filter:           nil,
 		WithData:         false,
 	}
+	log.Println("PollBalances")
 	updateBalance := func() {
 		ctx, _ := context.WithTimeout(context.Background(), pollingInterval)
 
-		cells, err := p.rpcClient.GetCells(ctx, searchKey, indexer.SearchOrderDesc, math.MaxUint64, "")
+		cells, err := p.rpcClient.GetCells(ctx, searchKey, indexer.SearchOrderDesc, math.MaxUint32, "")
 		if err != nil {
+			log.Println("balance poll error: ", err)
 			return
 		}
+		log.Println("balance poll: num_cells: ", len(cells.Objects))
 		balance := big.NewInt(0)
 		for _, cell := range cells.Objects {
 			balance = new(big.Int).Add(balance, new(big.Int).SetUint64(cell.Output.Capacity))
