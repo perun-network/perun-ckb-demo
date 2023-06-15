@@ -8,9 +8,8 @@ git submodule update --init --recursive
 
 if [ -d "accounts" ]; then
   rm -rf "accounts"
-else
-  mkdir -p accounts
 fi
+mkdir -p accounts
 
 if [ -d "data" ]; then
   rm -rf "data"
