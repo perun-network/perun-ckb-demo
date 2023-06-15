@@ -86,6 +86,3 @@ sed -i '/"Debug"]/ s/"Debug"]/"Debug", "Indexer"]/' ckb.toml
 # Increase max_request_body_size to allow for debug contracts (large in size)
 # to be deployed.
 # sed -i 's/max_request_body_size =.*$/max_request_body_size = 104857600/' ckb.toml
-
-# Start tmux.
-tmuxp load devnet-session.yaml
