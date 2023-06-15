@@ -5,7 +5,7 @@
 # registration of two accounts governing the genesis cells.
 
 if [ -d "accounts" ]; then
-  rm -rf "accounts/*"
+  rm -rf "accounts"
 else
   mkdir -p accounts
 fi
@@ -33,7 +33,9 @@ fi
 # Build all required contracts for Perun.
 DEVNET=$(pwd)
 cd contracts/
-capsule build
+capsule build --release
+# If debug contracts are wanted:
+# capsule build
 cd $DEVNET
 
 # Genesis cell #1
@@ -70,7 +72,7 @@ ckb init --chain dev --ba-arg $MINER_LOCK_ARG --ba-message "0x" --force
 # Make the scripts owned by the miner.
 sed -i "s/args =.*$/args = \"$MINER_LOCK_ARG\"/" contracts/deployment.toml
 # Use the debug versions of the contracts.
-sed -i "s/release/debug/" contracts/deployment.toml
+# sed -i "s/release/debug/" contracts/deployment.toml
 
 # Adjust miner config to process blocks faster.
 sed -i 's/value = 5000/value = 1000/' ckb-miner.toml
@@ -80,6 +82,9 @@ sed -i 's/genesis_epoch_length = 1000/genesis_epoch_length = 10/' specs/dev.toml
 
 # Enable the indexer.
 sed -i '/"Debug"]/ s/"Debug"]/"Debug", "Indexer"]/' ckb.toml
+# Increase max_request_body_size to allow for debug contracts (large in size)
+# to be deployed.
+# sed -i 's/max_request_body_size =.*$/max_request_body_size = 104857600/' ckb.toml
 
 # Start tmux.
 tmuxp load devnet-session.yaml

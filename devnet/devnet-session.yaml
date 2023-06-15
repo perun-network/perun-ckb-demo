@@ -16,5 +16,5 @@ windows:
         - ckb-cli
   - panes:
       - shell_command:
-        - sleep 6.0
+        - sleep 10.0
         - ./deploy_contracts.sh
