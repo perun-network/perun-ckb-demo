@@ -8,7 +8,4 @@ if [ -d "migrations/dev" ]; then
   rm -rf "migrations/dev"
 fi
 
-capsule deploy --address $genesis --api "http://127.0.0.1:8114" --fee 0.01 << EOF
-Yes
-
-EOF
+capsule deploy --address $genesis --api "http://127.0.0.1:8114" --fee 0.01 <<< "Yes"
