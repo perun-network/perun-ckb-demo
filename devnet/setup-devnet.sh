@@ -4,6 +4,8 @@
 # Part of the setup are a miner, two accounts Alice and Bob, as well as the
 # registration of two accounts governing the genesis cells.
 
+git submodule update --init --recursive
+
 if [ -d "accounts" ]; then
   rm -rf "accounts"
 else
