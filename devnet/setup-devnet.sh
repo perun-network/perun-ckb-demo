@@ -7,8 +7,6 @@
 ACCOUNTS_DIR="accounts"
 PERUN_CONTRACTS_DIR="contracts"
 
-git submodule update --init --recursive
-
 if [ -d $ACCOUNTS_DIR ]; then
   rm -rf $ACCOUNTS_DIR/*
 fi
