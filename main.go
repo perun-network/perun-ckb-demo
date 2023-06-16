@@ -63,6 +63,7 @@ func main() {
 		bus,
 		rpcNodeURL,
 		aliceAccount,
+		*keyAlice,
 		w,
 	)
 	if err != nil {
@@ -75,6 +76,7 @@ func main() {
 		bus,
 		rpcNodeURL,
 		bobAccount,
+		*keyBob,
 		w,
 	)
 	if err != nil {

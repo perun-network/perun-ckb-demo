@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/nervosnetwork/ckb-sdk-go/v2/rpc"
 	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"log"
@@ -48,13 +49,16 @@ func NewPaymentClient(
 	bus wire.Bus,
 	rpcUrl string,
 	account *wallet.Account,
+	key secp256k1.PrivateKey,
 	wallet *wallet.EphemeralWallet,
 ) (*PaymentClient, error) {
 	backendRPCClient, err := rpc.Dial(rpcUrl)
 	if err != nil {
 		return nil, err
 	}
-	ckbClient, err := ckbclient.NewClient(backendRPCClient, deployment)
+	signer := backend.NewSignerInstance(address.AsParticipant(account.Address()).ToCKBAddress(network), key, network)
+
+	ckbClient, err := ckbclient.NewClient(backendRPCClient, *signer, deployment)
 	if err != nil {
 		return nil, err
 	}
