@@ -7,8 +7,8 @@ genesis=$(cat $ACCOUNTS_DIR/genesis-2.txt | awk '/testnet/ { count++; if (count 
 
 cd $PERUN_CONTRACTS_DIR
 
-if [ -d "$PERUN_CONTRACTS_DIR/migrations/dev" ]; then
-  rm -rf "$PERUN_CONTRACTS_DIR/migrations/dev"
+if [ -d "migrations/dev" ]; then
+  rm -rf "migrations/dev"
 fi
 
 expect << EOF
