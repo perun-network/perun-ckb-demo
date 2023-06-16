@@ -1,8 +1,11 @@
 #!/bin/bash
 
-genesis=$(cat accounts/genesis-2.txt | awk '/testnet/ { count++; if (count == 2) print $2}')
+ACCOUNTS_DIR="accounts"
+PERUN_CONTRACTS_DIR="contracts"
 
-cd contracts
+genesis=$(cat $ACCOUNTS_DIR/genesis-2.txt | awk '/testnet/ { count++; if (count == 2) print $2}')
+
+cd $PERUN_CONTRACTS_DIR
 
 if [ -d "migrations/dev" ]; then
   rm -rf "migrations/dev"

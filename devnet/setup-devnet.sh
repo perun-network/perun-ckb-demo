@@ -4,12 +4,15 @@
 # Part of the setup are a miner, two accounts Alice and Bob, as well as the
 # registration of two accounts governing the genesis cells.
 
+ACCOUNTS_DIR="accounts"
+PERUN_CONTRACTS_DIR="contracts"
+
 git submodule update --init --recursive
 
-if [ -d "accounts" ]; then
-  rm -rf "accounts"
+if [ -d $ACCOUNTS_DIR ]; then
+  rm -rf $ACCOUNTS_DIR/*
 fi
-mkdir -p accounts
+mkdir -p $ACCOUNTS_DIR
 
 if [ -d "data" ]; then
   rm -rf "data"
@@ -33,7 +36,7 @@ fi
 
 # Build all required contracts for Perun.
 DEVNET=$(pwd)
-cd contracts/
+cd $PERUN_CONTRACTS_DIR
 capsule build --release
 # If debug contracts are wanted:
 # capsule build
@@ -49,21 +52,21 @@ GenCellTwoLockArg="0x470dcdc5e44064909650113a274b3b36aecb6dc7"
 GenCellTwoAddress="ckt1qyqywrwdchjyqeysjegpzw38fvandtktdhrs0zaxl4"
 
 create_account() {
-  echo -e '\n\n' | ckb-cli account new  > accounts/$1.txt
+  echo -e '\n\n' | ckb-cli account new  > $ACCOUNTS_DIR/$1.txt
 }
 
 # Create accounts for genesis cells.
 touch privateKeyGenesisCells.txt
 echo $GenCellOnePK > privateKeyGenesisCells.txt
 echo -e '\n\n' | ckb-cli account import --privkey-path privateKeyGenesisCells.txt
-ckb-cli account list | grep -B 5 -A 4 "$GenCellOneAddress" > accounts/genesis-1.txt
+ckb-cli account list | grep -B 5 -A 4 "$GenCellOneAddress" > $ACCOUNTS_DIR/genesis-1.txt
 echo $GenCellTwoPK > privateKeyGenesisCells.txt
 echo -e '\n\n' | ckb-cli account import --privkey-path privateKeyGenesisCells.txt
-ckb-cli account list | grep -B 5 -A 4 "$GenCellTwoAddress" > accounts/genesis-2.txt
+ckb-cli account list | grep -B 5 -A 4 "$GenCellTwoAddress" > $ACCOUNTS_DIR/genesis-2.txt
 rm privateKeyGenesisCells.txt
 
-echo -e '\n\n' |  ckb-cli account new > accounts/miner.txt
-MINER_LOCK_ARG=$(cat accounts/miner.txt | awk '/lock_arg/ {print $2}')
+echo -e '\n\n' |  ckb-cli account new > $ACCOUNTS_DIR/miner.txt
+MINER_LOCK_ARG=$(cat $ACCOUNTS_DIR/miner.txt | awk '/lock_arg/ {print $2}')
 
 create_account "alice"
 create_account "bob"
@@ -71,9 +74,9 @@ create_account "bob"
 ckb init --chain dev --ba-arg $MINER_LOCK_ARG --ba-message "0x" --force
 
 # Make the scripts owned by the miner.
-sed -i "s/args =.*$/args = \"$MINER_LOCK_ARG\"/" contracts/deployment.toml
+sed -i "s/args =.*$/args = \"$MINER_LOCK_ARG\"/" $PERUN_CONTRACTS_DIR/deployment/dev/deployment.toml
 # Use the debug versions of the contracts.
-# sed -i "s/release/debug/" contracts/deployment.toml
+# sed -i "s/release/debug/" $PERUN_CONTRACTS_DIR/deployment/dev/deployment.toml
 
 # Adjust miner config to process blocks faster.
 sed -i 's/value = 5000/value = 1000/' ckb-miner.toml
