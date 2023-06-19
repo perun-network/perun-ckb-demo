@@ -30,5 +30,11 @@ if [ -d "$SYSTEM_SCRIPTS_DIR" ]; then
 fi
 
 mkdir -p "$SYSTEM_SCRIPTS_DIR"
-## yq/jq will interpret the code_hash and tx_hash as numbers, so we need to wrap them in quotes.
-ckb-cli util genesis-scripts | sed 's/code_hash: \(.*\)/code_hash: \"\1\"/; s/tx_hash: \(.*\)/tx_hash: \"\1\"/' | yq . > "$SYSTEM_SCRIPTS_DIR/genesis-scripts.json"
+## jq will interpret the code_hash and tx_hash as numbers, so we need to wrap them in quotes.
+## The index must also be a string value, but yaml does not support hex values as a top level block argument
+## so we have to do that in a second pass...
+ckb-cli util genesis-scripts \
+  | sed 's/code_hash: \(.*\)/code_hash: \"\1\"/; s/tx_hash: \(.*\)/tx_hash: \"\1\"/' \
+  | yq . \
+  | sed 's/"index": \(.*\),/echo "\\"index\\": $(python -c "print(\\\"\\\\\\"{}\\\\\\"\\\".format(hex(\1)))"),";/e' \
+  | jq . > "$SYSTEM_SCRIPTS_DIR/default_scripts.json"
