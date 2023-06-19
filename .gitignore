@@ -24,3 +24,4 @@ devnet/specs
 devnet/ckb-miner.toml
 devnet/ckb.toml
 devnet/default.db-options
+devnet/system_scripts
