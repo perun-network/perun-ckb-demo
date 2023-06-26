@@ -29,7 +29,10 @@ func main() {
 	deployment.GetKey("./devnet/accounts/alice.pk")
 	SetLogFile("demo.log")
 
-	d, err := deployment.GetDeployment("./devnet/contracts/migrations/dev/")
+	d, err := deployment.GetDeployment("./devnet/contracts/migrations/dev/", "./devnet/system_scripts")
+	if err != nil {
+		log.Fatalf("error getting deployment: %v", err)
+	}
 
 	w := wallet.NewEphemeralWallet()
 

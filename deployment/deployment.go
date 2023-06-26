@@ -3,10 +3,11 @@ package deployment
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"io"
 	"os"
 	"path"
+
+	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"perun.network/perun-ckb-backend/backend"
 )
 
@@ -24,7 +25,7 @@ type Migration struct {
 	DepGroupRecipes []interface{} `json:"dep_group_recipes"`
 }
 
-func (m Migration) MakeDeployment() (backend.Deployment, error) {
+func (m Migration) MakeDeployment(systemScripts SystemScripts) (backend.Deployment, error) {
 	pcts := m.CellRecipes[0]
 	if pcts.Name != "pcts" {
 		return backend.Deployment{}, fmt.Errorf("first cell recipe must be pcts")
@@ -65,25 +66,23 @@ func (m Migration) MakeDeployment() (backend.Deployment, error) {
 			},
 			DepType: types.DepTypeCode,
 		},
-		PCTSCodeHash:      types.HexToHash(pcts.DataHash),
-		PCTSHashType:      types.HashTypeData,
-		PCLSCodeHash:      types.HexToHash(pcls.DataHash),
-		PCLSHashType:      types.HashTypeData,
-		PFLSCodeHash:      types.HexToHash(pfls.DataHash),
-		PFLSHashType:      types.HashTypeData,
-		PFLSMinCapacity:   PFLSMinCapacity,
-		DefaultLockScript: types.Script{},
-		DefaultLockScriptDep: types.CellDep{ // TODO: These make no sense
-			OutPoint: &types.OutPoint{
-				TxHash: types.HexToHash(pcls.TxHash),
-				Index:  m.CellRecipes[0].Index,
-			},
-			DepType: types.DepTypeCode,
+		PCTSCodeHash:    types.HexToHash(pcts.DataHash),
+		PCTSHashType:    types.HashTypeData,
+		PCLSCodeHash:    types.HexToHash(pcls.DataHash),
+		PCLSHashType:    types.HashTypeData,
+		PFLSCodeHash:    types.HexToHash(pfls.DataHash),
+		PFLSHashType:    types.HashTypeData,
+		PFLSMinCapacity: PFLSMinCapacity,
+		DefaultLockScript: types.Script{
+			CodeHash: systemScripts.Secp256k1Blake160SighashAll.ScriptID.CodeHash,
+			HashType: systemScripts.Secp256k1Blake160SighashAll.ScriptID.HashType,
+			Args:     []byte{},
 		},
+		DefaultLockScriptDep: systemScripts.Secp256k1Blake160SighashAll.CellDep,
 	}, nil
 }
 
-func GetDeployment(migrationDir string) (backend.Deployment, error) {
+func GetDeployment(migrationDir, systemScriptsDir string) (backend.Deployment, error) {
 	dir, err := os.ReadDir(migrationDir)
 	if err != nil {
 		return backend.Deployment{}, err
@@ -106,5 +105,10 @@ func GetDeployment(migrationDir string) (backend.Deployment, error) {
 	if err != nil {
 		return backend.Deployment{}, err
 	}
-	return migration.MakeDeployment()
+
+	ss, err := GetSystemScripts(systemScriptsDir)
+	if err != nil {
+		return backend.Deployment{}, err
+	}
+	return migration.MakeDeployment(ss)
 }
