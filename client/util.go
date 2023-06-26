@@ -1,6 +1,11 @@
 package client
 
-import "math/big"
+import (
+	"fmt"
+	"math/big"
+	gpchannel "perun.network/go-perun/channel"
+	asset2 "perun.network/perun-demo-tui/asset"
+)
 
 // CKByteToShannon converts a given amount in CKByte to Shannon.
 func CKByteToShannon(ckbyteAmount *big.Float) (shannonAmount *big.Int) {
@@ -17,4 +22,13 @@ func ShannonToCKByte(shannonAmount *big.Int) (adaAmount *big.Float) {
 	shannonPerCKByteFloat := new(big.Float).SetInt(shannonPerCKByte)
 	shannonAmountFloat := new(big.Float).SetInt(shannonAmount)
 	return new(big.Float).Quo(shannonAmountFloat, shannonPerCKByteFloat)
+}
+
+func GetTuiAsset(tuiAssets []asset2.TUIAsset, a gpchannel.Asset) (asset2.TUIAsset, error) {
+	for _, tuiAsset := range tuiAssets {
+		if a.Equal(tuiAsset) {
+			return tuiAsset, nil
+		}
+	}
+	return asset2.TUIAsset{}, fmt.Errorf("tui asset not found")
 }

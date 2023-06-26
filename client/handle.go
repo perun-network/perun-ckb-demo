@@ -6,29 +6,35 @@ import (
 	"log"
 	"perun.network/go-perun/channel"
 	"perun.network/go-perun/client"
+	asset2 "perun.network/perun-demo-tui/asset"
 )
 
 // HandleProposal is the callback for incoming channel proposals.
 func (p *PaymentClient) HandleProposal(prop client.ChannelProposal, r *client.ProposalResponder) {
-	lcp, err := func() (*client.LedgerChannelProposalMsg, error) {
+	lcp, tuiAssets, err := func() (*client.LedgerChannelProposalMsg, []asset2.TUIAsset, error) {
 		// Ensure that we got a ledger channel proposal.
 		lcp, ok := prop.(*client.LedgerChannelProposalMsg)
 		if !ok {
-			return nil, fmt.Errorf("invalid proposal type: %T", p)
+			return nil, nil, fmt.Errorf("invalid proposal type: %T", p)
 		}
 
 		// Check that we have the correct number of participants.
 		if lcp.NumPeers() != 2 {
-			return nil, fmt.Errorf("invalid number of participants: %d", lcp.NumPeers())
+			return nil, nil, fmt.Errorf("invalid number of participants: %d", lcp.NumPeers())
 		}
 		// Check that the channel has the expected assets and funding balances.
-		const assetIdx = 0
-		if err := channel.AssertAssetsEqual(lcp.InitBals.Assets, []channel.Asset{p.currency}); err != nil {
-			return nil, fmt.Errorf("Invalid assets: %v\n", err)
-		} else if lcp.FundingAgreement[assetIdx][0].Cmp(lcp.FundingAgreement[assetIdx][1]) != 0 {
-			return nil, fmt.Errorf("invalid funding balance")
+		tuiAssets := make([]asset2.TUIAsset, len(lcp.FundingAgreement))
+		for i, assetAlloc := range lcp.FundingAgreement {
+			if assetAlloc[0].Cmp(assetAlloc[1]) != 0 {
+				return nil, nil, fmt.Errorf("invalid funding balance for asset %d: %v", i, assetAlloc)
+			}
+			tuiAsset, err := GetTuiAsset(p.availableAssets, lcp.InitBals.Assets[i])
+			if err != nil {
+				return nil, nil, err
+			}
+			tuiAssets[i] = tuiAsset
 		}
-		return lcp, nil
+		return lcp, tuiAssets, nil
 	}()
 	if err != nil {
 		_ = r.Reject(context.TODO(), err.Error())
@@ -50,7 +56,7 @@ func (p *PaymentClient) HandleProposal(prop client.ChannelProposal, r *client.Pr
 	p.startWatching(ch)
 
 	// Store channel.
-	p.channels <- newPaymentChannel(ch, p.currency)
+	p.channels <- newPaymentChannel(ch, tuiAssets)
 	p.AcceptedChannel()
 }
 
@@ -64,11 +70,14 @@ func (p *PaymentClient) HandleUpdate(cur *channel.State, next client.ChannelUpda
 		}
 
 		receiverIdx := 1 - next.ActorIdx // This works because we are in a two-party channel.
-		curBal := cur.Allocation.Balance(receiverIdx, p.currency)
-		nextBal := next.State.Allocation.Balance(receiverIdx, p.currency)
-		if nextBal.Cmp(curBal) < 0 {
-			return fmt.Errorf("Invalid balance: %v", nextBal)
+		for _, a := range cur.Assets {
+			curBal := cur.Allocation.Balance(receiverIdx, a)
+			nextBal := next.State.Allocation.Balance(receiverIdx, a)
+			if nextBal.Cmp(curBal) < 0 {
+				return fmt.Errorf("invalid balance: %v", nextBal)
+			}
 		}
+
 		return nil
 	}()
 	if err != nil {

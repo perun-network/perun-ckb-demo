@@ -5,9 +5,11 @@ import (
 	"log"
 	"os"
 	"perun.network/go-perun/wire"
+	"perun.network/perun-ckb-backend/channel/asset"
 	"perun.network/perun-ckb-backend/wallet"
 	"perun.network/perun-ckb-demo/client"
 	"perun.network/perun-ckb-demo/deployment"
+	asset2 "perun.network/perun-demo-tui/asset"
 	vc "perun.network/perun-demo-tui/client"
 	"perun.network/perun-demo-tui/view"
 )
@@ -55,6 +57,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("error adding bob's account: %v", err)
 	}
+	tuiAssets := []asset2.TUIAsset{
+		asset2.TUIAsset{
+			Asset: asset.CKBAsset,
+			Name:  "CKBytes",
+		},
+	}
 
 	// Setup clients.
 	log.Println("Setting up clients.")
@@ -68,6 +76,7 @@ func main() {
 		aliceAccount,
 		*keyAlice,
 		w,
+		tuiAssets,
 	)
 	if err != nil {
 		log.Fatalf("error creating alice's client: %v", err)
@@ -81,10 +90,11 @@ func main() {
 		bobAccount,
 		*keyBob,
 		w,
+		tuiAssets,
 	)
 	if err != nil {
 		log.Fatalf("error creating bob's client: %v", err)
 	}
 	clients := []vc.DemoClient{alice, bob}
-	_ = view.RunDemo("CKB Payment Channel Demo", clients)
+	_ = view.RunDemo("CKB Payment Channel Demo", clients, tuiAssets)
 }
