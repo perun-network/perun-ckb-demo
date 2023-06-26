@@ -3,12 +3,11 @@ module perun.network/perun-ckb-demo
 go 1.17
 
 require (
-	github.com/nervosnetwork/ckb-sdk-go/v2 v2.2.0
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0
 	github.com/nervosnetwork/ckb-sdk-go/v2 v2.2.0
 	perun.network/go-perun v0.10.6
 	perun.network/perun-ckb-backend v0.0.0-20230626124824-0295849aed91
-	perun.network/perun-demo-tui v0.0.0-20230626123930-1b4742b7f79d
+	perun.network/perun-demo-tui v0.0.0-20230626140344-a443672ad196
 	polycry.pt/poly-go v0.0.0-20220301085937-fb9d71b45a37
 )
 

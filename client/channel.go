@@ -17,18 +17,18 @@ import (
 
 type PaymentChannel struct {
 	ch     *client.Channel
-	assets []asset2.TUIAsset
+	assets []channel.Asset
 }
 
 // newPaymentChannel creates a new payment channel.
-func newPaymentChannel(ch *client.Channel, assets []asset2.TUIAsset) *PaymentChannel {
+func newPaymentChannel(ch *client.Channel, assets []channel.Asset) *PaymentChannel {
 	return &PaymentChannel{
 		ch:     ch,
 		assets: assets,
 	}
 }
 
-func FormatState(c *PaymentChannel, state *channel.State, network types.Network) string {
+func FormatState(c *PaymentChannel, state *channel.State, network types.Network, assetRegister asset2.Register) string {
 	id := c.ch.ID()
 	parties := c.ch.Params().Parts
 	if len(parties) != 2 {
@@ -56,11 +56,11 @@ func FormatState(c *PaymentChannel, state *channel.State, network types.Network)
 	)
 	ret += fmt.Sprintf("%s:\n", fstPartyPaymentAddr)
 	for i, a := range c.assets {
-		ret += fmt.Sprintf("    [green]%s[white] %s\n", balAStrings[i], a.Name)
+		ret += fmt.Sprintf("    [green]%s[white] %s\n", balAStrings[i], assetRegister.GetName(a))
 	}
 	ret += fmt.Sprintf("%s:\n", sndPartyPaymentAddr)
 	for i, a := range c.assets {
-		ret += fmt.Sprintf("    [green]%s[white] %s\n", balBStrings[i], a.Name)
+		ret += fmt.Sprintf("    [green]%s[white] %s\n", balBStrings[i], assetRegister.GetName(a))
 	}
 	ret += fmt.Sprintf("Final: [green]%t[white]\nVersion: [green]%d[white]", state.IsFinal, state.Version)
 	return ret
@@ -70,7 +70,7 @@ func (c PaymentChannel) State() *channel.State {
 	return c.ch.State().Clone()
 }
 
-func (c PaymentChannel) SendPayment(amounts map[asset2.TUIAsset]float64) {
+func (c PaymentChannel) SendPayment(amounts map[channel.Asset]float64) {
 	// Transfer the given amount from us to peer.
 	// Use UpdateBy to update the channel state.
 	err := c.ch.Update(context.TODO(), func(state *channel.State) {

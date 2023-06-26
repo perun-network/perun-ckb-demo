@@ -6,35 +6,29 @@ import (
 	"log"
 	"perun.network/go-perun/channel"
 	"perun.network/go-perun/client"
-	asset2 "perun.network/perun-demo-tui/asset"
 )
 
 // HandleProposal is the callback for incoming channel proposals.
 func (p *PaymentClient) HandleProposal(prop client.ChannelProposal, r *client.ProposalResponder) {
-	lcp, tuiAssets, err := func() (*client.LedgerChannelProposalMsg, []asset2.TUIAsset, error) {
+	lcp, err := func() (*client.LedgerChannelProposalMsg, error) {
 		// Ensure that we got a ledger channel proposal.
 		lcp, ok := prop.(*client.LedgerChannelProposalMsg)
 		if !ok {
-			return nil, nil, fmt.Errorf("invalid proposal type: %T", p)
+			return nil, fmt.Errorf("invalid proposal type: %T", p)
 		}
 
 		// Check that we have the correct number of participants.
 		if lcp.NumPeers() != 2 {
-			return nil, nil, fmt.Errorf("invalid number of participants: %d", lcp.NumPeers())
+			return nil, fmt.Errorf("invalid number of participants: %d", lcp.NumPeers())
 		}
 		// Check that the channel has the expected assets and funding balances.
-		tuiAssets := make([]asset2.TUIAsset, len(lcp.FundingAgreement))
 		for i, assetAlloc := range lcp.FundingAgreement {
 			if assetAlloc[0].Cmp(assetAlloc[1]) != 0 {
-				return nil, nil, fmt.Errorf("invalid funding balance for asset %d: %v", i, assetAlloc)
+				return nil, fmt.Errorf("invalid funding balance for asset %d: %v", i, assetAlloc)
 			}
-			tuiAsset, err := GetTuiAsset(p.availableAssets, lcp.InitBals.Assets[i])
-			if err != nil {
-				return nil, nil, err
-			}
-			tuiAssets[i] = tuiAsset
+
 		}
-		return lcp, tuiAssets, nil
+		return lcp, nil
 	}()
 	if err != nil {
 		_ = r.Reject(context.TODO(), err.Error())
@@ -56,7 +50,7 @@ func (p *PaymentClient) HandleProposal(prop client.ChannelProposal, r *client.Pr
 	p.startWatching(ch)
 
 	// Store channel.
-	p.channels <- newPaymentChannel(ch, tuiAssets)
+	p.channels <- newPaymentChannel(ch, lcp.InitBals.Clone().Assets)
 	p.AcceptedChannel()
 }
 
