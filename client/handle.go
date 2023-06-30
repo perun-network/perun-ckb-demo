@@ -22,11 +22,11 @@ func (p *PaymentClient) HandleProposal(prop client.ChannelProposal, r *client.Pr
 			return nil, fmt.Errorf("invalid number of participants: %d", lcp.NumPeers())
 		}
 		// Check that the channel has the expected assets and funding balances.
-		const assetIdx = 0
-		if err := channel.AssertAssetsEqual(lcp.InitBals.Assets, []channel.Asset{p.currency}); err != nil {
-			return nil, fmt.Errorf("Invalid assets: %v\n", err)
-		} else if lcp.FundingAgreement[assetIdx][0].Cmp(lcp.FundingAgreement[assetIdx][1]) != 0 {
-			return nil, fmt.Errorf("invalid funding balance")
+		for i, assetAlloc := range lcp.FundingAgreement {
+			if assetAlloc[0].Cmp(assetAlloc[1]) != 0 {
+				return nil, fmt.Errorf("invalid funding balance for asset %d: %v", i, assetAlloc)
+			}
+
 		}
 		return lcp, nil
 	}()
@@ -50,7 +50,7 @@ func (p *PaymentClient) HandleProposal(prop client.ChannelProposal, r *client.Pr
 	p.startWatching(ch)
 
 	// Store channel.
-	p.channels <- newPaymentChannel(ch, p.currency)
+	p.channels <- newPaymentChannel(ch, lcp.InitBals.Clone().Assets)
 	p.AcceptedChannel()
 }
 
@@ -64,11 +64,14 @@ func (p *PaymentClient) HandleUpdate(cur *channel.State, next client.ChannelUpda
 		}
 
 		receiverIdx := 1 - next.ActorIdx // This works because we are in a two-party channel.
-		curBal := cur.Allocation.Balance(receiverIdx, p.currency)
-		nextBal := next.State.Allocation.Balance(receiverIdx, p.currency)
-		if nextBal.Cmp(curBal) < 0 {
-			return fmt.Errorf("Invalid balance: %v", nextBal)
+		for _, a := range cur.Assets {
+			curBal := cur.Allocation.Balance(receiverIdx, a)
+			nextBal := next.State.Allocation.Balance(receiverIdx, a)
+			if nextBal.Cmp(curBal) < 0 {
+				return fmt.Errorf("invalid balance: %v", nextBal)
+			}
 		}
+
 		return nil
 	}()
 	if err != nil {

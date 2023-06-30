@@ -9,48 +9,60 @@ import (
 	"math/big"
 	"perun.network/go-perun/channel"
 	"perun.network/go-perun/client"
+	"perun.network/perun-ckb-backend/channel/asset"
 	address2 "perun.network/perun-ckb-backend/wallet/address"
+	asset2 "perun.network/perun-demo-tui/asset"
 	"strconv"
 )
 
 type PaymentChannel struct {
-	ch       *client.Channel
-	currency channel.Asset
+	ch     *client.Channel
+	assets []channel.Asset
 }
 
 // newPaymentChannel creates a new payment channel.
-func newPaymentChannel(ch *client.Channel, currency channel.Asset) *PaymentChannel {
+func newPaymentChannel(ch *client.Channel, assets []channel.Asset) *PaymentChannel {
 	return &PaymentChannel{
-		ch:       ch,
-		currency: currency,
+		ch:     ch,
+		assets: assets,
 	}
 }
 
-func FormatState(c *PaymentChannel, state *channel.State, network types.Network) string {
+func FormatState(c *PaymentChannel, state *channel.State, network types.Network, assetRegister asset2.Register) string {
 	id := c.ch.ID()
 	parties := c.ch.Params().Parts
-
-	balA, _ := ShannonToCKByte(state.Allocation.Balance(0, c.currency)).Float64()
-	balAStr := strconv.FormatFloat(balA, 'f', 4, 64)
-
-	fstPartyPaymentAddr, _ := address2.AsParticipant(parties[0]).ToCKBAddress(network).Encode()
-	sndPartyPaymentAddr, _ := address2.AsParticipant(parties[1]).ToCKBAddress(network).Encode()
-
-	balB, _ := ShannonToCKByte(state.Allocation.Balance(1, c.currency)).Float64()
-	balBStr := strconv.FormatFloat(balB, 'f', 4, 64)
 	if len(parties) != 2 {
 		log.Fatalf("invalid parties length: " + strconv.Itoa(len(parties)))
 	}
+	fstPartyPaymentAddr, _ := address2.AsParticipant(parties[0]).ToCKBAddress(network).Encode()
+	sndPartyPaymentAddr, _ := address2.AsParticipant(parties[1]).ToCKBAddress(network).Encode()
+	balAStrings := make([]string, len(c.assets))
+	balBStrings := make([]string, len(c.assets))
+	for i, a := range c.assets {
+		if a.Equal(asset.CKBAsset) {
+			balA, _ := ShannonToCKByte(state.Allocation.Balance(0, a)).Float64()
+			balAStrings[i] = strconv.FormatFloat(balA, 'f', 2, 64)
+			balB, _ := ShannonToCKByte(state.Allocation.Balance(1, a)).Float64()
+			balBStrings[i] = strconv.FormatFloat(balB, 'f', 2, 64)
+		} else {
+			balAStrings[i] = state.Allocation.Balance(0, a).String()
+			balBStrings[i] = state.Allocation.Balance(1, a).String()
+		}
+	}
+
 	ret := fmt.Sprintf(
-		"Channel ID: [green]%s[white]\nBalances:\n    %s: [green]%s[white] CKByte\n    %s: [green]%s[white] CKByte\nFinal: [green]%t[white]\nVersion: [green]%d[white]",
+		"Channel ID: [green]%s[white]\n[red]Balances[white]:\n",
 		hex.EncodeToString(id[:]),
-		fstPartyPaymentAddr,
-		balAStr,
-		sndPartyPaymentAddr,
-		balBStr,
-		state.IsFinal,
-		state.Version,
 	)
+	ret += fmt.Sprintf("%s:\n", fstPartyPaymentAddr)
+	for i, a := range c.assets {
+		ret += fmt.Sprintf("    [green]%s[white] %s\n", balAStrings[i], assetRegister.GetName(a))
+	}
+	ret += fmt.Sprintf("%s:\n", sndPartyPaymentAddr)
+	for i, a := range c.assets {
+		ret += fmt.Sprintf("    [green]%s[white] %s\n", balBStrings[i], assetRegister.GetName(a))
+	}
+	ret += fmt.Sprintf("Final: [green]%t[white]\nVersion: [green]%d[white]", state.IsFinal, state.Version)
 	return ret
 }
 
@@ -58,14 +70,25 @@ func (c PaymentChannel) State() *channel.State {
 	return c.ch.State().Clone()
 }
 
-func (c PaymentChannel) SendPayment(amount float64) {
+func (c PaymentChannel) SendPayment(amounts map[channel.Asset]float64) {
 	// Transfer the given amount from us to peer.
 	// Use UpdateBy to update the channel state.
 	err := c.ch.Update(context.TODO(), func(state *channel.State) {
-		shannonAmount := CKByteToShannon(big.NewFloat(amount))
 		actor := c.ch.Idx()
 		peer := 1 - actor
-		state.Allocation.TransferBalance(actor, peer, c.currency, shannonAmount)
+		for a, amount := range amounts {
+			if amount < 0 {
+				continue
+			}
+			if a.Equal(asset.CKBAsset) {
+				shannonAmount := CKByteToShannon(big.NewFloat(amount))
+				state.Allocation.TransferBalance(actor, peer, a, shannonAmount)
+			} else {
+				intAmount := new(big.Int).SetUint64(uint64(amount))
+				state.Allocation.TransferBalance(actor, peer, a, intAmount)
+			}
+		}
+
 	})
 	if err != nil {
 		panic(err)

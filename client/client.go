@@ -21,6 +21,7 @@ import (
 	ckbclient "perun.network/perun-ckb-backend/client"
 	"perun.network/perun-ckb-backend/wallet"
 	"perun.network/perun-ckb-backend/wallet/address"
+	asset2 "perun.network/perun-demo-tui/asset"
 	vc "perun.network/perun-demo-tui/client"
 	"polycry.pt/poly-go/sync"
 )
@@ -35,7 +36,7 @@ type PaymentClient struct {
 	Account       *wallet.Account
 	wAddr         wire.Address
 	Network       types.Network
-	currency      gpchannel.Asset
+	assetRegister asset2.Register
 	PerunClient   *client.Client
 
 	channels  chan *PaymentChannel
@@ -51,6 +52,7 @@ func NewPaymentClient(
 	account *wallet.Account,
 	key secp256k1.PrivateKey,
 	wallet *wallet.EphemeralWallet,
+	assetRegister asset2.Register,
 ) (*PaymentClient, error) {
 	backendRPCClient, err := rpc.Dial(rpcUrl)
 	if err != nil {
@@ -79,15 +81,15 @@ func NewPaymentClient(
 		return nil, err
 	}
 	p := &PaymentClient{
-		Name:        name,
-		balance:     big.NewInt(0),
-		Account:     account,
-		wAddr:       wAddr,
-		Network:     network,
-		currency:    asset.CKBAsset,
-		PerunClient: perunClient,
-		channels:    make(chan *PaymentChannel, 1),
-		rpcClient:   balanceRPC,
+		Name:          name,
+		balance:       big.NewInt(0),
+		Account:       account,
+		wAddr:         wAddr,
+		Network:       network,
+		assetRegister: assetRegister,
+		PerunClient:   perunClient,
+		channels:      make(chan *PaymentChannel, 1),
+		rpcClient:     balanceRPC,
 	}
 
 	go p.PollBalances()
@@ -105,7 +107,7 @@ func (p *PaymentClient) Register(observer vc.Observer) {
 	defer p.observerMutex.Unlock()
 	p.observers = append(p.observers, observer)
 	if p.Channel != nil {
-		observer.UpdateState(FormatState(p.Channel, p.Channel.State(), p.Network))
+		observer.UpdateState(FormatState(p.Channel, p.Channel.State(), p.Network, p.assetRegister))
 	}
 	observer.UpdateBalance(FormatBalance(p.GetBalance()))
 }
@@ -131,7 +133,7 @@ func (p *PaymentClient) Deregister(observer vc.Observer) {
 func (p *PaymentClient) NotifyAllState(from, to *gpchannel.State) {
 	p.observerMutex.Lock()
 	defer p.observerMutex.Unlock()
-	str := FormatState(p.Channel, to, p.Network)
+	str := FormatState(p.Channel, to, p.Network, p.assetRegister)
 	for _, o := range p.observers {
 		o.UpdateState(str)
 	}
@@ -158,19 +160,38 @@ func (p *PaymentClient) WireAddress() wire.Address {
 }
 
 // OpenChannel opens a new channel with the specified peer and funding.
-func (p *PaymentClient) OpenChannel(peer wire.Address, amount float64) {
+func (p *PaymentClient) OpenChannel(peer wire.Address, amounts map[gpchannel.Asset]float64) {
 	// We define the channel participants. The proposer always has index 0. Here
 	// we use the on-chain addresses as off-chain addresses, but we could also
 	// use different ones.
 	log.Println("OpenChannel called")
 	participants := []wire.Address{p.WireAddress(), peer}
 
+	assets := make([]gpchannel.Asset, len(amounts))
+	i := 0
+	for a := range amounts {
+		assets[i] = a
+		i++
+	}
+
 	// We create an initial allocation which defines the starting balances.
-	initAlloc := gpchannel.NewAllocation(2, p.currency)
-	initAlloc.SetAssetBalances(p.currency, []gpchannel.Bal{
-		CKByteToShannon(big.NewFloat(amount)), // Our initial balance.
-		CKByteToShannon(big.NewFloat(amount)), // Peer's initial balance.
-	})
+	initAlloc := gpchannel.NewAllocation(2, assets...)
+	log.Println(initAlloc.Assets)
+	for a, amount := range amounts {
+		if a.Equal(asset.CKBAsset) {
+			initAlloc.SetAssetBalances(a, []gpchannel.Bal{
+				CKByteToShannon(big.NewFloat(amount)), // Our initial balance.
+				CKByteToShannon(big.NewFloat(amount)), // Peer's initial balance.
+			})
+		} else {
+			intAmount := new(big.Int).SetUint64(uint64(amount))
+			initAlloc.SetAssetBalances(a, []gpchannel.Bal{
+				intAmount, // Our initial balance.
+				intAmount, // Peer's initial balance.
+			})
+		}
+
+	}
 	log.Println("Created Allocation")
 
 	// Prepare the channel proposal by defining the channel parameters.
@@ -200,7 +221,7 @@ func (p *PaymentClient) OpenChannel(peer wire.Address, amount float64) {
 
 	log.Println("Started Watching")
 
-	p.Channel = newPaymentChannel(ch, p.currency)
+	p.Channel = newPaymentChannel(ch, assets)
 	p.Channel.ch.OnUpdate(p.NotifyAllState)
 	p.NotifyAllState(nil, ch.State())
 }
@@ -215,11 +236,11 @@ func (p *PaymentClient) startWatching(ch *client.Channel) {
 	}()
 }
 
-func (p *PaymentClient) SendPaymentToPeer(amount float64) {
+func (p *PaymentClient) SendPaymentToPeer(amounts map[gpchannel.Asset]float64) {
 	if !p.HasOpenChannel() {
 		return
 	}
-	p.Channel.SendPayment(amount)
+	p.Channel.SendPayment(amounts)
 }
 
 func (p *PaymentClient) Settle() {
@@ -239,4 +260,12 @@ func (p *PaymentClient) AcceptedChannel() *PaymentChannel {
 	p.Channel.ch.OnUpdate(p.NotifyAllState)
 	p.NotifyAllState(nil, p.Channel.ch.State())
 	return p.Channel
+}
+
+// GetOpenChannelAssets returns the assets of the client's currently open channel.
+func (p *PaymentClient) GetOpenChannelAssets() []gpchannel.Asset {
+	if !p.HasOpenChannel() {
+		return nil
+	}
+	return p.Channel.assets
 }

@@ -81,9 +81,13 @@ sed -i 's/value = 5000/value = 1000/' ckb-miner.toml
 
 # Reduce epoch length to 10 blocks.
 sed -i 's/genesis_epoch_length = 1000/genesis_epoch_length = 10/' specs/dev.toml
+sed -i '/\[params\]/a\
+max_block_bytes = 100_000_000' specs/dev.toml
 
 # Enable the indexer.
 sed -i '/"Debug"]/ s/"Debug"]/"Debug", "Indexer"]/' ckb.toml
+sed -i '/filter = "info"/ s/filter = "info"/filter = "debug"/' ckb.toml
+sed -i 's/max_tx_verify_cycles = 70_000_000/max_tx_verify_cycles = 100_000_000/' ckb.toml
 # Increase max_request_body_size to allow for debug contracts (large in size)
 # to be deployed.
-# sed -i 's/max_request_body_size =.*$/max_request_body_size = 104857600/' ckb.toml
+sed -i 's/max_request_body_size =.*$/max_request_body_size = 104857600/' ckb.toml

@@ -31,7 +31,6 @@ func (p *PaymentClient) PollBalances() {
 			log.Println("balance poll error: ", err)
 			return
 		}
-		log.Println("balance poll: num_cells: ", len(cells.Objects))
 		balance := big.NewInt(0)
 		for _, cell := range cells.Objects {
 			balance = new(big.Int).Add(balance, new(big.Int).SetUint64(cell.Output.Capacity))
@@ -57,5 +56,5 @@ func (p *PaymentClient) PollBalances() {
 func FormatBalance(bal *big.Int) string {
 	log.Printf("balance: %s", bal.String())
 	balCKByte, _ := ShannonToCKByte(bal).Float64()
-	return strconv.FormatFloat(balCKByte, 'f', 6, 64) + " CKByte"
+	return strconv.FormatFloat(balCKByte, 'f', 2, 64) + " CKByte"
 }

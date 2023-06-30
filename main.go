@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
 	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"log"
 	"os"
+	"perun.network/go-perun/channel"
 	"perun.network/go-perun/wire"
+	"perun.network/perun-ckb-backend/channel/asset"
 	"perun.network/perun-ckb-backend/wallet"
 	"perun.network/perun-ckb-demo/client"
 	"perun.network/perun-ckb-demo/deployment"
@@ -25,9 +28,58 @@ func SetLogFile(path string) {
 	log.SetOutput(logFile)
 }
 
+type AssetRegister struct {
+	getName  map[channel.Asset]string
+	getAsset map[string]channel.Asset
+	assets   []channel.Asset
+}
+
+func (a AssetRegister) GetAsset(name string) channel.Asset {
+	return a.getAsset[name]
+}
+
+func (a AssetRegister) GetName(asset channel.Asset) string {
+	return a.getName[asset]
+}
+
+func (a AssetRegister) GetAllAssets() []channel.Asset {
+	return a.assets
+}
+
+func NewAssetRegister(assets []channel.Asset, names []string) (*AssetRegister, error) {
+	assetRegister := &AssetRegister{
+		getName:  make(map[channel.Asset]string),
+		getAsset: make(map[string]channel.Asset),
+		assets:   assets,
+	}
+	if len(assets) != len(names) {
+		return nil, errors.New("length of assets and names must be equal")
+	}
+	for i, a := range assets {
+		if a == nil {
+			return nil, errors.New("asset cannot be nil")
+		}
+		if names[i] == "" {
+			return nil, errors.New("name cannot be empty")
+		}
+		if assetRegister.getName[a] != "" {
+			return nil, errors.New("duplicate asset")
+		}
+		if assetRegister.getAsset[names[i]] != nil {
+			return nil, errors.New("duplicate name")
+		}
+		assetRegister.getName[a] = names[i]
+		assetRegister.getAsset[names[i]] = a
+	}
+	return assetRegister, nil
+}
+
 func main() {
-	deployment.GetKey("./devnet/accounts/alice.pk")
 	SetLogFile("demo.log")
+	assetRegister, err := NewAssetRegister([]channel.Asset{asset.CKBAsset}, []string{"CKBytes"})
+	if err != nil {
+		log.Fatalf("error creating mapping: %v", err)
+	}
 
 	d, err := deployment.GetDeployment("./devnet/contracts/migrations/dev/", "./devnet/system_scripts")
 	if err != nil {
@@ -68,6 +120,7 @@ func main() {
 		aliceAccount,
 		*keyAlice,
 		w,
+		assetRegister,
 	)
 	if err != nil {
 		log.Fatalf("error creating alice's client: %v", err)
@@ -81,10 +134,11 @@ func main() {
 		bobAccount,
 		*keyBob,
 		w,
+		assetRegister,
 	)
 	if err != nil {
 		log.Fatalf("error creating bob's client: %v", err)
 	}
 	clients := []vc.DemoClient{alice, bob}
-	_ = view.RunDemo("CKB Payment Channel Demo", clients)
+	_ = view.RunDemo("CKB Payment Channel Demo", clients, assetRegister)
 }
