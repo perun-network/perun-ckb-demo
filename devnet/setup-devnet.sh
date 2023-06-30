@@ -86,7 +86,7 @@ max_block_bytes = 100_000_000' specs/dev.toml
 
 # Enable the indexer.
 sed -i '/"Debug"]/ s/"Debug"]/"Debug", "Indexer"]/' ckb.toml
-sed -i '/filter = "info"/ s/filter = "info"/filter = "trace"/' ckb.toml
+sed -i '/filter = "info"/ s/filter = "info"/filter = "debug"/' ckb.toml
 sed -i 's/max_tx_verify_cycles = 70_000_000/max_tx_verify_cycles = 100_000_000/' ckb.toml
 # Increase max_request_body_size to allow for debug contracts (large in size)
 # to be deployed.
