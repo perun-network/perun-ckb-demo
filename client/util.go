@@ -14,8 +14,8 @@ func CKByteToShannon(ckbyteAmount *big.Float) (shannonAmount *big.Int) {
 }
 
 // ShannonToCKByte converts a given amount in Shannon to CKByte.
-func ShannonToCKByte(shannonAmount *big.Int) (adaAmount *big.Float) {
-	shannonPerCKByte := new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil)
+func ShannonToCKByte(shannonAmount *big.Int) *big.Float {
+	shannonPerCKByte := new(big.Int).Exp(big.NewInt(10), big.NewInt(8), nil)
 	shannonPerCKByteFloat := new(big.Float).SetInt(shannonPerCKByte)
 	shannonAmountFloat := new(big.Float).SetInt(shannonAmount)
 	return new(big.Float).Quo(shannonAmountFloat, shannonPerCKByteFloat)
