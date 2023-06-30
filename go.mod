@@ -6,8 +6,8 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0
 	github.com/nervosnetwork/ckb-sdk-go/v2 v2.2.0
 	perun.network/go-perun v0.10.6
-	perun.network/perun-ckb-backend v0.0.0-20230626124824-0295849aed91
-	perun.network/perun-demo-tui v0.0.0-20230626140344-a443672ad196
+	perun.network/perun-ckb-backend v0.0.0-20230630160133-f9c7a6543b70
+	perun.network/perun-demo-tui v0.0.0-20230630145255-14da5c7c57b8
 	polycry.pt/poly-go v0.0.0-20220301085937-fb9d71b45a37
 )
 
@@ -49,5 +49,3 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/nervosnetwork/ckb-sdk-go/v2 v2.2.0 => github.com/perun-network/ckb-sdk-go/v2 v2.2.1-0.20230601140721-2bf596fddd80
