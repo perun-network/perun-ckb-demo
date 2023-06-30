@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0
 	github.com/nervosnetwork/ckb-sdk-go/v2 v2.2.0
+	github.com/stretchr/testify v1.8.4
 	perun.network/go-perun v0.10.6
 	perun.network/perun-ckb-backend v0.0.0-20230630160133-f9c7a6543b70
 	perun.network/perun-demo-tui v0.0.0-20230630145255-14da5c7c57b8
@@ -13,10 +14,9 @@ require (
 
 require (
 	github.com/Pilatuz/bigz v1.2.1 // indirect
-	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/deckarep/golang-set/v2 v2.3.0 // indirect
 	github.com/ethereum/go-ethereum v1.12.0 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
@@ -37,7 +37,6 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
@@ -49,3 +48,5 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/nervosnetwork/ckb-sdk-go/v2 v2.2.0 => github.com/perun-network/ckb-sdk-go/v2 v2.2.1-0.20230601140721-2bf596fddd80
