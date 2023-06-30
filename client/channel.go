@@ -41,9 +41,9 @@ func FormatState(c *PaymentChannel, state *channel.State, network types.Network,
 	for i, a := range c.assets {
 		if a.Equal(asset.CKBAsset) {
 			balA, _ := ShannonToCKByte(state.Allocation.Balance(0, a)).Float64()
-			balAStrings[i] = strconv.FormatFloat(balA, 'f', 4, 64)
+			balAStrings[i] = strconv.FormatFloat(balA, 'f', 2, 64)
 			balB, _ := ShannonToCKByte(state.Allocation.Balance(1, a)).Float64()
-			balBStrings[i] = strconv.FormatFloat(balB, 'f', 4, 64)
+			balBStrings[i] = strconv.FormatFloat(balB, 'f', 2, 64)
 		} else {
 			balAStrings[i] = state.Allocation.Balance(0, a).String()
 			balBStrings[i] = state.Allocation.Balance(1, a).String()
