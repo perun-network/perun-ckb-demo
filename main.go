@@ -83,13 +83,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("error getting deployment: %v", err)
 	}
-	sudtOwnerLockArg, err := parseSUDTOwnerLockArg("./accounts/sudt-owner-lock-hash.txt")
+	sudtOwnerLockArg, err := parseSUDTOwnerLockArg("./devnet/accounts/sudt-owner-lock-hash.txt")
 	if err != nil {
 		log.Fatalf("error getting SUDT owner lock arg: %v", err)
 	}
 	sudtInfo.Script.Args = []byte(sudtOwnerLockArg)
 
-	assetRegister, err := NewAssetRegister([]channel.Asset{asset.CKBAsset}, []string{"CKBytes"})
+	assetRegister, err := NewAssetRegister([]channel.Asset{asset.CKBAsset, &asset.SUDTAsset{
+		TypeScript:  *sudtInfo.Script,
+		MaxCapacity: 1_000 * 1_000 * 1_000 * 1_000,
+	}}, []string{"CKBytes", "sudt"})
 	if err != nil {
 		log.Fatalf("error creating mapping: %v", err)
 	}
