@@ -91,7 +91,7 @@ func (m Migration) MakeDeployment(systemScripts SystemScripts, sudtOwnerLockArg 
 		DefaultLockScript: types.Script{
 			CodeHash: systemScripts.Secp256k1Blake160SighashAll.ScriptID.CodeHash,
 			HashType: systemScripts.Secp256k1Blake160SighashAll.ScriptID.HashType,
-			Args:     []byte{},
+			Args:     make([]byte, 32),
 		},
 		DefaultLockScriptDep: systemScripts.Secp256k1Blake160SighashAll.CellDep,
 		SUDTs: map[types.Hash]types.Script{
