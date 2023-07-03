@@ -38,3 +38,21 @@ ckb-cli util genesis-scripts \
   | yq . \
   | sed 's/"index": \(.*\),/echo "\\"index\\": $(python -c "print(\\\"\\\\\\"{}\\\\\\"\\\".format(hex(\1)))"),";/e' \
   | jq . > "$SYSTEM_SCRIPTS_DIR/default_scripts.json"
+
+cd $DEVNET_DIR
+
+SUDT_TX_HASH=$(cat ./contracts/migrations/dev/*.json | jq .cell_recipes[3].tx_hash)
+SUDT_TX_INDEX=$(cat ./contracts/migrations/dev/*.json | jq .cell_recipes[3].index)
+SUDT_DATA_HASH=$(cat ./contracts/migrations/dev/*.json | jq .cell_recipes[3].data_hash)
+
+# TODO: This only works as long as the tx index is 0-9.
+jq ".items.sudt.script_id.code_hash = $SUDT_DATA_HASH | .items.sudt.cell_dep.out_point.tx_hash = $SUDT_TX_HASH | .items.sudt.cell_dep.out_point.index = \"0x$SUDT_TX_INDEX\"" ./sudt-celldep-template.json > $SYSTEM_SCRIPTS_DIR/sudt-celldep.json
+
+# Fund SUDT accounts
+echo "Funding accounts for Alice and Bob with SUDT tokens"
+ALICE=$(cat $ACCOUNTS_DIR/alice.txt | awk '/testnet/ { count++; if (count == 1) print $2}')
+BOB=$(cat $ACCOUNTS_DIR/bob.txt | awk '/testnet/ { count++; if (count == 1) print $2}')
+GENESIS=$(cat $ACCOUNTS_DIR/genesis-2.txt | awk '/testnet/ { count++; if (count == 1) print $2}')
+SUDT_AMOUNT=100000000
+
+ckb-cli sudt issue --owner $GENESIS --udt-to $ALICE:$SUDT_AMOUNT $BOB:$SUDT_AMOUNT --cell-deps $SYSTEM_SCRIPTS_DIR/sudt-celldep.json
