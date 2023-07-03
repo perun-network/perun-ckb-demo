@@ -75,10 +75,11 @@ You will be greeted with a demo window that is split into two panes:
 
 ## Keybinds
 
-* `ctrl+a`: select left pane
-* `ctrl+b`: select right pane
+* `ctrl+a`: Select left pane
+* `ctrl+b`: Select right pane
 * `tab`: Cycle through selectable fields
 * `Enter`: Select or confirm highlighted field
+* `r`: Go back to parent page
 * `q`: Close the demo
 
 ## Example run
