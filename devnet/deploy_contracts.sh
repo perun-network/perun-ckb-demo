@@ -14,7 +14,7 @@ if [ -d "migrations/dev" ]; then
 fi
 
 expect << EOF
-spawn capsule deploy --address $genesis --api "http://127.0.0.1:8114" --fee 0.01
+spawn capsule deploy --address $genesis --api "http://127.0.0.1:8114" --fee 1
 expect "Confirm deployment? (Yes/No)"
 send "Yes\r"
 expect "Password:"
