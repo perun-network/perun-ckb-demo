@@ -1,11 +1,13 @@
 package deployment
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"perun.network/perun-ckb-backend/backend"
@@ -47,7 +49,14 @@ func (m Migration) MakeDeployment(systemScripts SystemScripts, sudtOwnerLockArg 
 	if err != nil {
 		return backend.Deployment{}, SUDTInfo{}, err
 	}
-	sudtInfo.Script.Args = []byte(sudtOwnerLockArg)
+	// NOTE: The SUDT lock-arg always contains a newline character at the end.
+	hexString := strings.ReplaceAll(sudtOwnerLockArg[2:], "\n", "")
+	hexString = strings.ReplaceAll(hexString, "\r", "")
+	hexString = strings.ReplaceAll(hexString, " ", "")
+	sudtInfo.Script.Args, err = hex.DecodeString(hexString)
+	if err != nil {
+		return backend.Deployment{}, SUDTInfo{}, fmt.Errorf("invalid sudt owner lock arg: %v", err)
+	}
 
 	return backend.Deployment{
 		Network: types.NetworkTest,
