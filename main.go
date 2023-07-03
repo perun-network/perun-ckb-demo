@@ -79,15 +79,14 @@ func NewAssetRegister(assets []channel.Asset, names []string) (*AssetRegister, e
 
 func main() {
 	SetLogFile("demo.log")
-	d, sudtInfo, err := deployment.GetDeployment("./devnet/contracts/migrations/dev/", "./devnet/system_scripts")
-	if err != nil {
-		log.Fatalf("error getting deployment: %v", err)
-	}
 	sudtOwnerLockArg, err := parseSUDTOwnerLockArg("./devnet/accounts/sudt-owner-lock-hash.txt")
 	if err != nil {
 		log.Fatalf("error getting SUDT owner lock arg: %v", err)
 	}
-	sudtInfo.Script.Args = []byte(sudtOwnerLockArg)
+	d, sudtInfo, err := deployment.GetDeployment("./devnet/contracts/migrations/dev/", "./devnet/system_scripts", sudtOwnerLockArg)
+	if err != nil {
+		log.Fatalf("error getting deployment: %v", err)
+	}
 
 	assetRegister, err := NewAssetRegister([]channel.Asset{asset.CKBAsset, &asset.SUDTAsset{
 		TypeScript:  *sudtInfo.Script,

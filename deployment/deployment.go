@@ -30,23 +30,24 @@ type Migration struct {
 	DepGroupRecipes []interface{} `json:"dep_group_recipes"`
 }
 
-func (m Migration) MakeDeployment(systemScripts SystemScripts) (backend.Deployment, *SUDTInfo, error) {
+func (m Migration) MakeDeployment(systemScripts SystemScripts, sudtOwnerLockArg string) (backend.Deployment, SUDTInfo, error) {
 	pcts := m.CellRecipes[0]
 	if pcts.Name != "pcts" {
-		return backend.Deployment{}, nil, fmt.Errorf("first cell recipe must be pcts")
+		return backend.Deployment{}, SUDTInfo{}, fmt.Errorf("first cell recipe must be pcts")
 	}
 	pcls := m.CellRecipes[1]
 	if pcls.Name != "pcls" {
-		return backend.Deployment{}, nil, fmt.Errorf("second cell recipe must be pcls")
+		return backend.Deployment{}, SUDTInfo{}, fmt.Errorf("second cell recipe must be pcls")
 	}
 	pfls := m.CellRecipes[2]
 	if pfls.Name != "pfls" {
-		return backend.Deployment{}, nil, fmt.Errorf("third cell recipe must be pfls")
+		return backend.Deployment{}, SUDTInfo{}, fmt.Errorf("third cell recipe must be pfls")
 	}
 	sudtInfo, err := m.GetSUDT()
 	if err != nil {
-		return backend.Deployment{}, nil, err
+		return backend.Deployment{}, SUDTInfo{}, err
 	}
+	sudtInfo.Script.Args = []byte(sudtOwnerLockArg)
 
 	return backend.Deployment{
 		Network: types.NetworkTest,
@@ -84,7 +85,10 @@ func (m Migration) MakeDeployment(systemScripts SystemScripts) (backend.Deployme
 			Args:     []byte{},
 		},
 		DefaultLockScriptDep: systemScripts.Secp256k1Blake160SighashAll.CellDep,
-	}, sudtInfo, nil
+		SUDTs: map[types.Hash]types.Script{
+			sudtInfo.Script.Hash(): *sudtInfo.Script,
+		},
+	}, *sudtInfo, nil
 }
 
 func (m Migration) GetSUDT() (*SUDTInfo, error) {
@@ -108,33 +112,33 @@ func (m Migration) GetSUDT() (*SUDTInfo, error) {
 	}, nil
 }
 
-func GetDeployment(migrationDir, systemScriptsDir string) (backend.Deployment, *SUDTInfo, error) {
+func GetDeployment(migrationDir, systemScriptsDir, sudtOwnerLockArg string) (backend.Deployment, SUDTInfo, error) {
 	dir, err := os.ReadDir(migrationDir)
 	if err != nil {
-		return backend.Deployment{}, nil, err
+		return backend.Deployment{}, SUDTInfo{}, err
 	}
 	if len(dir) != 1 {
-		return backend.Deployment{}, nil, fmt.Errorf("migration dir must contain exactly one file")
+		return backend.Deployment{}, SUDTInfo{}, fmt.Errorf("migration dir must contain exactly one file")
 	}
 	migrationName := dir[0].Name()
 	migrationFile, err := os.Open(path.Join(migrationDir, migrationName))
 	defer migrationFile.Close()
 	if err != nil {
-		return backend.Deployment{}, nil, err
+		return backend.Deployment{}, SUDTInfo{}, err
 	}
 	migrationData, err := io.ReadAll(migrationFile)
 	if err != nil {
-		return backend.Deployment{}, nil, err
+		return backend.Deployment{}, SUDTInfo{}, err
 	}
 	var migration Migration
 	err = json.Unmarshal(migrationData, &migration)
 	if err != nil {
-		return backend.Deployment{}, nil, err
+		return backend.Deployment{}, SUDTInfo{}, err
 	}
 
 	ss, err := GetSystemScripts(systemScriptsDir)
 	if err != nil {
-		return backend.Deployment{}, nil, err
+		return backend.Deployment{}, SUDTInfo{}, err
 	}
-	return migration.MakeDeployment(ss)
+	return migration.MakeDeployment(ss, sudtOwnerLockArg)
 }
