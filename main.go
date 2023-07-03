@@ -2,9 +2,12 @@ package main
 
 import (
 	"errors"
-	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"perun.network/go-perun/channel"
 	"perun.network/go-perun/wire"
 	"perun.network/perun-ckb-backend/channel/asset"
@@ -76,14 +79,19 @@ func NewAssetRegister(assets []channel.Asset, names []string) (*AssetRegister, e
 
 func main() {
 	SetLogFile("demo.log")
+	d, sudtInfo, err := deployment.GetDeployment("./devnet/contracts/migrations/dev/", "./devnet/system_scripts")
+	if err != nil {
+		log.Fatalf("error getting deployment: %v", err)
+	}
+	sudtOwnerLockArg, err := parseSUDTOwnerLockArg("./accounts/sudt-owner-lock-hash.txt")
+	if err != nil {
+		log.Fatalf("error getting SUDT owner lock arg: %v", err)
+	}
+	sudtInfo.Script.Args = []byte(sudtOwnerLockArg)
+
 	assetRegister, err := NewAssetRegister([]channel.Asset{asset.CKBAsset}, []string{"CKBytes"})
 	if err != nil {
 		log.Fatalf("error creating mapping: %v", err)
-	}
-
-	d, err := deployment.GetDeployment("./devnet/contracts/migrations/dev/", "./devnet/system_scripts")
-	if err != nil {
-		log.Fatalf("error getting deployment: %v", err)
 	}
 
 	w := wallet.NewEphemeralWallet()
@@ -141,4 +149,16 @@ func main() {
 	}
 	clients := []vc.DemoClient{alice, bob}
 	_ = view.RunDemo("CKB Payment Channel Demo", clients, assetRegister)
+}
+
+func parseSUDTOwnerLockArg(pathToSUDTOwnerLockArg string) (string, error) {
+	b, err := ioutil.ReadFile(pathToSUDTOwnerLockArg)
+	if err != nil {
+		return "", fmt.Errorf("reading sudt owner lock arg from file: %w", err)
+	}
+	sudtOwnerLockArg := string(b)
+	if sudtOwnerLockArg == "" {
+		return "", errors.New("sudt owner lock arg not found in file")
+	}
+	return sudtOwnerLockArg, nil
 }
