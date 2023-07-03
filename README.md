@@ -24,6 +24,7 @@ We use various tools to enable a convenient setup for the local development test
 * `ckb` with version `0.109.0` or higher.
 * `ckb-cli` with version `1.4.0` or higher.
 * `capsule` with version `0.9.2`.
+* `docker` and a **running** `dockerd` instance!
 
 # Setup
 
@@ -54,7 +55,7 @@ Spin up the local testnet. For this change to the `perun-ckb-demo/devnet` direct
   $ make dev
 ```
 
-[`make dev` command](.assets/make_dev_cmd.png)
+![`make dev` command](./.assets/make_dev_cmd.png)
 
 Wait for ~15 seconds. This is the time it takes for the devnet setup to be completed (deployed all contracts, funded testnet accounts etc.).
 
@@ -70,7 +71,7 @@ If you are comfortable using `tmux` you can of course use the `devnet` session, 
 
 You will be greeted with a demo window that is split into two panes:
 
-[demo-window](.assets/00-demo_start.png)
+![demo-window](./.assets/00_demo_start.png)
 
 ## Keybinds
 
@@ -84,36 +85,36 @@ You will be greeted with a demo window that is split into two panes:
 
 Let's use the left side for Alice and the right side for Bob:
 
-[alice-left-bob-right](.assets/01-bob_alice_panes.png)
+![alice-left-bob-right](./.assets/01_bob_alice_panes.png)
 
 We will use Bob to view the channels he has currently open with others and Alice to open a new channel with Bob.
 
-[alice-opens-bob-views](.assets/02-bob_view_alice_open.png)
+![alice-opens-bob-views](./.assets/02-bob_view_alice_open.png)
 
 We will use Alice to open a channel with 400 CKBytes.
 
-[alice-opens-with-400-ckbytes](.assets/03-alice_opens_400.png)
+![alice-opens-with-400-ckbytes](./.assets/03-alice_opens_400.png)
 
 After issuing the open transaction, we have to wait for it to be confirmed on-chain. Both parties will wait:
 
-[alice-and-bob-wait](.assets/04-alice_bob_wait.png)
+![alice-and-bob-wait](./.assets/04-alice_bob_wait.png)
 
 After a few seconds the transaction is confirmed on-chain and both parties were able to observe that fact. This will result in both Alice and Bob viewing the now offically established channel.
 
-[alice-and-bob-view-channel](.assets/05-alice_bob_view_opened_channel.png)
+![alice-and-bob-view-channel](./.assets/05-alice_bob_view_opened_channel.png)
 
 Let's use Alice to send ten micropayments of 20 CKBytes per payment to Bob via their channel.
 
-[alice-send-micropayments](.assets/06-alice_10_micropayments_20_each.png)
+![alice-send-micropayments](./.assets/06-alice_10_micropayments_20_each.png)
 
 We can observe the fact that multiple payments were issued by looking at the channels version number, which was incremented by ten, the amount of micropayments issued by Alice.
 
-[micropayments-done](.assets/07-alice_micropayments_done.png)
+![micropayments-done](./.assets/07-alice_micropayments_done.png)
 
 Now we use Bob to settle the channel.
 
-[settle-channel-through-bob](.assets/08-bob_settles_channel.png)
+![settle-channel-through-bob](./.assets/08-bob_settles.png)
 
 After a few seconds the channels settlement is confirmed on-chain and we can view the updated balances for Bob and Alice.
 
-[channel-settled](.assets/09-show_final_balances.png)
+![channel-settled](./.assets/09-show_final_balances.png)
