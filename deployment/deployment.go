@@ -94,6 +94,9 @@ func (m Migration) MakeDeployment(systemScripts SystemScripts, sudtOwnerLockArg 
 			Args:     make([]byte, 32),
 		},
 		DefaultLockScriptDep: systemScripts.Secp256k1Blake160SighashAll.CellDep,
+		SUDTDeps: map[types.Hash]types.CellDep{
+			sudtInfo.Script.Hash(): *sudtInfo.CellDep,
+		},
 		SUDTs: map[types.Hash]types.Script{
 			sudtInfo.Script.Hash(): *sudtInfo.Script,
 		},
@@ -112,8 +115,11 @@ func (m Migration) GetSUDT() (*SUDTInfo, error) {
 		Args:     []byte{},
 	}
 	sudtCellDep := types.CellDep{
-		OutPoint: &types.OutPoint{},
-		DepType:  types.DepTypeCode,
+		OutPoint: &types.OutPoint{
+			TxHash: types.HexToHash(sudt.TxHash),
+			Index:  sudt.Index,
+		},
+		DepType: types.DepTypeCode,
 	}
 	return &SUDTInfo{
 		Script:  &sudtScript,

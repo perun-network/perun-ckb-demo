@@ -11,6 +11,7 @@ import (
 	"perun.network/go-perun/channel"
 	"perun.network/go-perun/wire"
 	"perun.network/perun-ckb-backend/channel/asset"
+	"perun.network/perun-ckb-backend/transaction"
 	"perun.network/perun-ckb-backend/wallet"
 	"perun.network/perun-ckb-demo/client"
 	"perun.network/perun-ckb-demo/deployment"
@@ -88,9 +89,14 @@ func main() {
 		log.Fatalf("error getting deployment: %v", err)
 	}
 
+	maxSudtCapacity := transaction.CalculateCellCapacity(types.CellOutput{
+		Capacity: 0,
+		Lock:     &d.DefaultLockScript,
+		Type:     sudtInfo.Script,
+	})
 	assetRegister, err := NewAssetRegister([]channel.Asset{asset.CKBAsset, &asset.SUDTAsset{
 		TypeScript:  *sudtInfo.Script,
-		MaxCapacity: 1_000 * 1_000 * 1_000 * 1_000,
+		MaxCapacity: maxSudtCapacity,
 	}}, []string{"CKBytes", "sudt"})
 	if err != nil {
 		log.Fatalf("error creating mapping: %v", err)
