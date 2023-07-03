@@ -55,4 +55,10 @@ BOB=$(cat $ACCOUNTS_DIR/bob.txt | awk '/testnet/ { count++; if (count == 1) prin
 GENESIS=$(cat $ACCOUNTS_DIR/genesis-2.txt | awk '/testnet/ { count++; if (count == 1) print $2}')
 SUDT_AMOUNT=100000000
 
-ckb-cli sudt issue --owner $GENESIS --udt-to $ALICE:$SUDT_AMOUNT $BOB:$SUDT_AMOUNT --cell-deps $SYSTEM_SCRIPTS_DIR/sudt-celldep.json
+expect << EOF
+spawn ckb-cli sudt issue --owner $GENESIS --udt-to $ALICE:$SUDT_AMOUNT $BOB:$SUDT_AMOUNT --cell-deps $SYSTEM_SCRIPTS_DIR/sudt-celldep.json
+expect "owner Password:"
+send "\r"
+expect eof
+EOF
+
