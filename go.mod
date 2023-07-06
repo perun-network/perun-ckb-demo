@@ -7,7 +7,7 @@ require (
 	github.com/nervosnetwork/ckb-sdk-go/v2 v2.2.0
 	github.com/stretchr/testify v1.8.4
 	perun.network/go-perun v0.10.6
-	perun.network/perun-ckb-backend v0.0.0-20230630160133-f9c7a6543b70
+	perun.network/perun-ckb-backend v0.0.0-20230703145522-50aee2a16b37
 	perun.network/perun-demo-tui v0.0.0-20230630145255-14da5c7c57b8
 	polycry.pt/poly-go v0.0.0-20220301085937-fb9d71b45a37
 )
