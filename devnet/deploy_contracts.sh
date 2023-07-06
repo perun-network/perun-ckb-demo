@@ -49,6 +49,8 @@ SUDT_DATA_HASH=$(cat ./contracts/migrations/dev/*.json | jq .cell_recipes[3].dat
 jq ".items.sudt.script_id.code_hash = $SUDT_DATA_HASH | .items.sudt.cell_dep.out_point.tx_hash = $SUDT_TX_HASH | .items.sudt.cell_dep.out_point.index = \"0x$SUDT_TX_INDEX\"" ./sudt-celldep-template.json > $SYSTEM_SCRIPTS_DIR/sudt-celldep.json
 
 # Fund SUDT accounts
+echo "Waiting 15 seconds before funding accounts"
+sleep 15
 echo "Funding accounts for Alice and Bob with SUDT tokens"
 ALICE=$(cat $ACCOUNTS_DIR/alice.txt | awk '/testnet/ { count++; if (count == 1) print $2}')
 BOB=$(cat $ACCOUNTS_DIR/bob.txt | awk '/testnet/ { count++; if (count == 1) print $2}')
