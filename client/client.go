@@ -33,6 +33,7 @@ type PaymentClient struct {
 	Channel       *PaymentChannel
 	Name          string
 	balance       *big.Int
+	sudtBalance   *big.Int
 	Account       *wallet.Account
 	wAddr         wire.Address
 	Network       types.Network
@@ -83,6 +84,7 @@ func NewPaymentClient(
 	p := &PaymentClient{
 		Name:          name,
 		balance:       big.NewInt(0),
+		sudtBalance:   big.NewInt(0),
 		Account:       account,
 		wAddr:         wAddr,
 		Network:       network,
@@ -109,13 +111,19 @@ func (p *PaymentClient) Register(observer vc.Observer) {
 	if p.Channel != nil {
 		observer.UpdateState(FormatState(p.Channel, p.Channel.State(), p.Network, p.assetRegister))
 	}
-	observer.UpdateBalance(FormatBalance(p.GetBalance()))
+	observer.UpdateBalance(FormatBalance(p.GetBalance(), p.GetSudtBalance()))
 }
 
 func (p *PaymentClient) GetBalance() *big.Int {
 	p.balanceMutex.Lock()
 	defer p.balanceMutex.Unlock()
 	return new(big.Int).Set(p.balance)
+}
+
+func (p *PaymentClient) GetSudtBalance() *big.Int {
+	p.balanceMutex.Lock()
+	defer p.balanceMutex.Unlock()
+	return new(big.Int).Set(p.sudtBalance)
 }
 
 func (p *PaymentClient) Deregister(observer vc.Observer) {
@@ -139,8 +147,9 @@ func (p *PaymentClient) NotifyAllState(from, to *gpchannel.State) {
 	}
 }
 
-func (p *PaymentClient) NotifyAllBalance(bal int64) {
-	str := FormatBalance(new(big.Int).SetInt64(bal))
+func (p *PaymentClient) NotifyAllBalance(ckbBal int64) {
+	// TODO: This is hacky and gruesome, but we make this work for this demo.
+	str := FormatBalance(new(big.Int).SetInt64(ckbBal), p.GetSudtBalance())
 	for _, o := range p.observers {
 		o.UpdateBalance(str)
 	}

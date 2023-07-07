@@ -2,12 +2,16 @@ package main
 
 import (
 	"errors"
-	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"perun.network/go-perun/channel"
 	"perun.network/go-perun/wire"
 	"perun.network/perun-ckb-backend/channel/asset"
+	"perun.network/perun-ckb-backend/transaction"
 	"perun.network/perun-ckb-backend/wallet"
 	"perun.network/perun-ckb-demo/client"
 	"perun.network/perun-ckb-demo/deployment"
@@ -76,14 +80,26 @@ func NewAssetRegister(assets []channel.Asset, names []string) (*AssetRegister, e
 
 func main() {
 	SetLogFile("demo.log")
-	assetRegister, err := NewAssetRegister([]channel.Asset{asset.CKBAsset}, []string{"CKBytes"})
+	sudtOwnerLockArg, err := parseSUDTOwnerLockArg("./devnet/accounts/sudt-owner-lock-hash.txt")
 	if err != nil {
-		log.Fatalf("error creating mapping: %v", err)
+		log.Fatalf("error getting SUDT owner lock arg: %v", err)
 	}
-
-	d, err := deployment.GetDeployment("./devnet/contracts/migrations/dev/", "./devnet/system_scripts")
+	d, sudtInfo, err := deployment.GetDeployment("./devnet/contracts/migrations/dev/", "./devnet/system_scripts", sudtOwnerLockArg)
 	if err != nil {
 		log.Fatalf("error getting deployment: %v", err)
+	}
+
+	maxSudtCapacity := transaction.CalculateCellCapacity(types.CellOutput{
+		Capacity: 0,
+		Lock:     &d.DefaultLockScript,
+		Type:     sudtInfo.Script,
+	})
+	assetRegister, err := NewAssetRegister([]channel.Asset{asset.CKBAsset, &asset.SUDTAsset{
+		TypeScript:  *sudtInfo.Script,
+		MaxCapacity: maxSudtCapacity,
+	}}, []string{"CKBytes", "sudt"})
+	if err != nil {
+		log.Fatalf("error creating mapping: %v", err)
 	}
 
 	w := wallet.NewEphemeralWallet()
@@ -141,4 +157,16 @@ func main() {
 	}
 	clients := []vc.DemoClient{alice, bob}
 	_ = view.RunDemo("CKB Payment Channel Demo", clients, assetRegister)
+}
+
+func parseSUDTOwnerLockArg(pathToSUDTOwnerLockArg string) (string, error) {
+	b, err := ioutil.ReadFile(pathToSUDTOwnerLockArg)
+	if err != nil {
+		return "", fmt.Errorf("reading sudt owner lock arg from file: %w", err)
+	}
+	sudtOwnerLockArg := string(b)
+	if sudtOwnerLockArg == "" {
+		return "", errors.New("sudt owner lock arg not found in file")
+	}
+	return sudtOwnerLockArg, nil
 }
