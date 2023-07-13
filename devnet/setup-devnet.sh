@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -eu
+[ -n "${DEBUG:-}" ] && set -x || true
+
 # This script sets up the devnet for CKB.
 # Part of the setup are a miner, two accounts Alice and Bob, as well as the
 # registration of two accounts governing the genesis cells.
@@ -56,10 +59,10 @@ create_account() {
 # Create accounts for genesis cells.
 touch privateKeyGenesisCells.txt
 echo $GenCellOnePK > privateKeyGenesisCells.txt
-echo -e '\n\n' | ckb-cli account import --privkey-path privateKeyGenesisCells.txt
+echo -e '\n\n' | ckb-cli account import --privkey-path privateKeyGenesisCells.txt || true
 ckb-cli account list | grep -B 5 -A 4 "$GenCellOneAddress" > $ACCOUNTS_DIR/genesis-1.txt
 echo $GenCellTwoPK > privateKeyGenesisCells.txt
-echo -e '\n\n' | ckb-cli account import --privkey-path privateKeyGenesisCells.txt
+echo -e '\n\n' | ckb-cli account import --privkey-path privateKeyGenesisCells.txt || true
 ckb-cli account list | grep -B 5 -A 4 "$GenCellTwoAddress" > $ACCOUNTS_DIR/genesis-2.txt
 rm privateKeyGenesisCells.txt
 
