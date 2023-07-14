@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -eu
+[ -n "${DEBUG:-}" ] && set -x || true
+
 ACCOUNTS_DIR="accounts"
 PERUN_CONTRACTS_DIR="contracts"
 SYSTEM_SCRIPTS_DIR="system_scripts"
@@ -33,10 +36,9 @@ mkdir -p "$SYSTEM_SCRIPTS_DIR"
 ## jq will interpret the code_hash and tx_hash as numbers, so we need to wrap them in quotes.
 ## The index must also be a string value, but yaml does not support hex values as a top level block argument
 ## so we have to do that in a second pass...
-ckb-cli util genesis-scripts \
+ckb-cli util genesis-scripts --output-format json \
   | sed 's/code_hash: \(.*\)/code_hash: \"\1\"/; s/tx_hash: \(.*\)/tx_hash: \"\1\"/' \
-  | yq . \
-  | sed 's/"index": \(.*\),/echo "\\"index\\": $(python -c "print(\\\"\\\\\\"{}\\\\\\"\\\".format(hex(\1)))"),";/e' \
+  | sed 's/"index": \([0-9]\+\),/echo "\\"index\\": $(python -c "print(\\\"\\\\\\"{}\\\\\\"\\\".format(hex(\1)))"),";/e' \
   | jq . > "$SYSTEM_SCRIPTS_DIR/default_scripts.json"
 
 cd $DEVNET_DIR
