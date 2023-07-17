@@ -135,6 +135,8 @@ perun.network/perun-ckb-backend v0.0.0-20230630160133-f9c7a6543b70 h1:lxZbcuKxmS
 perun.network/perun-ckb-backend v0.0.0-20230630160133-f9c7a6543b70/go.mod h1:A2ShyBTssUqwhIpPOM4ASAWrUcnu8JLm/jVWURQRRfo=
 perun.network/perun-ckb-backend v0.0.0-20230703145522-50aee2a16b37 h1:nEcPSPYBSUijWY4zwG4irvxuPSas4hmGbxC418xLvc4=
 perun.network/perun-ckb-backend v0.0.0-20230703145522-50aee2a16b37/go.mod h1:9bemdwIr/a8rg2FWWn+l4fEel6uJOSJHB7V0OX/X1LM=
+perun.network/perun-ckb-backend v0.0.0-20230717130337-a5d5c9b94de7 h1:z7OD7ssr+dFJew+Od42ouaZacp9b8uDC2dbzWTylpoQ=
+perun.network/perun-ckb-backend v0.0.0-20230717130337-a5d5c9b94de7/go.mod h1:9bemdwIr/a8rg2FWWn+l4fEel6uJOSJHB7V0OX/X1LM=
 perun.network/perun-demo-tui v0.0.0-20230630145255-14da5c7c57b8 h1:JozzczQs2TdbKLt7/AYOiKaQ54ftpVNSJSWvw57Xcwo=
 perun.network/perun-demo-tui v0.0.0-20230630145255-14da5c7c57b8/go.mod h1:/ysNhYj1sZbvodEUdMSowl7DFnISNgPcjo5XJn7f95s=
 polycry.pt/poly-go v0.0.0-20220301085937-fb9d71b45a37 h1:iA5GzEa/hHfVlQpimEjPV09NATwHXxSjWNB0VVodtew=
